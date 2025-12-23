@@ -1,0 +1,51 @@
+.env
+
+# Node
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+lib/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Runtime files
+.DS_Store
+
+# Environment variables (local)
+.env.local
+.env.*.local
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# Coverage and testing
+coverage/
+.nyc_output/
+
+# Caches
+.cache/
+.parcel-cache/
+
+# Misc
+.eslintcache
+.pnp.*
+
+# Vercel / Next / other frameworks
+.next/
+.vercel/
+
+# Other
+.vscode-test/
+/generated/prisma
