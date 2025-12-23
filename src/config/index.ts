@@ -8,6 +8,7 @@ interface Config {
   db_database:string;
   db_host:string;
   db_port:number;
+  jwt_secret:string;
 }
 
 const config: Config = {
@@ -15,7 +16,8 @@ const config: Config = {
   db_user:process.env.POSTGRES_USERNAME || "",
   db_database:process.env.POSTGRES_DATABASE || "",
   db_host:process.env.POSTGRES_HOST || "localhost",
-  db_port:Number(process.env.POSTGRES_PORT) || 5432
+  db_port:Number(process.env.POSTGRES_PORT) || 5432,
+  jwt_secret:process.env.JWT_SECRET || "random123"
 };
 
 

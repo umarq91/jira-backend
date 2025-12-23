@@ -1,7 +1,10 @@
 import express from "express";
 import config from "./config";
 import pool, { testDb } from "./db";
+import userAuth from "./routes/auth"
 const app = express();
+
+app.use(express.json());
 
 async function startServer() {
   try {
@@ -19,4 +22,6 @@ async function startServer() {
   }
 }
 
+
+app.use('/users',userAuth)
 startServer();

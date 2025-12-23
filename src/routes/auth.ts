@@ -1,9 +1,17 @@
-import { NextFunction, Request } from "express";
+import { Request, Response } from "express";
+import { getMe, login, signUp } from "../controllers/auth";
+import { isAuthenticated } from "../middlewares";
 
+const express = require("express");
 
-async function SignUp(req: Request, res: NextFunction) {
-  const payload = req.body;
-  try {
-    // await prisma.user.create();
-  } catch (error) {}
-}
+const router = express.Router();
+
+router.get("/", (req:Request, res:Response) => {
+  res.send("Wiki home page");
+});
+
+router.post("/signup", signUp);
+router.post('/login',login)
+router.get('/me',isAuthenticated,getMe)
+
+export default router;
