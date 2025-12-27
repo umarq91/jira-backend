@@ -1,17 +1,13 @@
 import { Request, Response } from "express";
 import { getMe, login, signUp } from "../controllers/auth";
-import { isAuthenticated } from "../middlewares";
+import { isAdmin } from "../middlewares";
 
 const express = require("express");
 
 const router = express.Router();
 
-router.get("/", (req:Request, res:Response) => {
-  res.send("Wiki home page");
-});
-
 router.post("/signup", signUp);
 router.post('/login',login)
-router.get('/me',isAuthenticated,getMe)
+router.get('/me',isAdmin,getMe)
 
 export default router;

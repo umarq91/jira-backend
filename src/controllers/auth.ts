@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import pool from "../db";
 import bcrypt from "bcrypt";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import config from "../config";
 
 // TODO: add zod validation
@@ -63,36 +63,31 @@ export async function login(req: Request, res: Response) {
       return res.status(200).json({ error: "Wrong credentials" });
     }
     const payload = {
-      userId:doesUserExist.rows[0].id,
-      username:doesUserExist.rows[0].username
-    }
-      const token = jwt.sign(payload,config.jwt_secret);
+      userId: doesUserExist.rows[0].id,
+      username: doesUserExist.rows[0].username,
+      role:doesUserExist.rows[0].role
+    };
+    const token = jwt.sign(payload, config.jwt_secret);
 
-      res.status(200).json({
-        success:true,
-        message:"User created succssfully",
-        token
-      })
-
-
+    res.status(200).json({
+      success: true,
+      message: "User created succssfully",
+      token,
+    });
   } catch (error) {
-     console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 }
 
-
-export async function getMe(req:any,res:Response){
+export async function getMe(req: Request, res: Response) {
   try {
-    // TODO: add type
-    const {userId} = req.user;
-    const user =await pool.query('select * from users where id=$1',[userId]);
+    const user = await pool.query("select * from users where id=$1", [
+      req.user?.userId,
+    ]);
     return res.json({
-      success:true,
-      user:user.rows[0]
-    })
-
-  } catch (error) {
-    
-  }
+      success: true,
+      user: user.rows[0],
+    });
+  } catch (error) {}
 }
