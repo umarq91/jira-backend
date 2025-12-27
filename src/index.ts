@@ -11,9 +11,7 @@ app.use(express.json());
 
 async function startServer() {
   try {
-    // ✅ Test DB BEFORE starting server
     await testDb();
-    console.log("✅ Database connected");
 
     app.listen(config.port, () => {
       console.log(`🚀 Server running on ${config.port}`);

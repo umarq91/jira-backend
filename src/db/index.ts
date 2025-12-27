@@ -10,8 +10,8 @@ const pool = new Pool({
 
 export async function testDb() {
   try {
-    const res = await pool.query("SELECT * from users");
-    console.log(res.rows)
+    await pool.query("SELECT 1");
+    console.log("✅ Database connected");
   } catch (err) {
     console.error("❌ DB error:", err as unknown);
   }
