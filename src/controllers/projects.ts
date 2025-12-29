@@ -92,9 +92,6 @@ export const getProjects = async (req: Request, res: Response) => {
   }
 };
 
-/* =========================
-   GET SINGLE PROJECT
-========================= */
 export const getProject = async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
@@ -160,10 +157,7 @@ export const addMemberInProject = async (req: Request, res: Response) => {
   }
 };
 
-/* =========================
-   GET PROJECT MEMBERS
-========================= */
-export const getAllMembers = async (req:Request, res:Response) => {
+export const getAllMembers = async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
 
@@ -188,7 +182,6 @@ export const getAllMembers = async (req:Request, res:Response) => {
     return res.status(500).json({ success: false });
   }
 };
-
 
 /* =========================
    GET MY (MEMBER) PROJECTS

@@ -1,9 +1,10 @@
 import express from "express";
 import config from "./config";
 import pool, { testDb } from "./db";
-import userRoutes from "./routes/auth"
-import projectsRoutes from "./routes/projects"
-import issuesRoutes from "./routes/issues"
+import userRoutes from "./routes/auth";
+import projectsRoutes from "./routes/projects";
+import issuesRoutes from "./routes/issues";
+import sprintRoutes from "./routes/sprints";
 
 const app = express();
 
@@ -23,8 +24,8 @@ async function startServer() {
   }
 }
 
-
-app.use('/users',userRoutes);
-app.use('/projects',projectsRoutes)
-app.use('/issue',issuesRoutes)
+app.use("/users", userRoutes);
+app.use("/projects", projectsRoutes);
+app.use("/issue", issuesRoutes);
+app.use("/sprints", sprintRoutes);
 startServer();

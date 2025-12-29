@@ -1,19 +1,24 @@
-import { createIssue, getIssues } from "../controllers/issues";
+import express from "express";
+import {
+  createIssue,
+  getBacklogIssues,
+  getSprintIssues,
+  moveIssue,
+  updateIssueStatus,
+} from "../controllers/issues";
 import { isAuthenticated } from "../middlewares";
-
-const express = require("express");
 
 const router = express.Router();
 
-/*
-GET ->/issues/:projectId get All Issues of a project
-GET ->/issues/:id GET SINGLE ISSUE
-POST -> CREATE ISSUE 
-PATCH -> EDIT ISSUE
-POST -> /issues/:issueId/assign -> {from:"",to:""} 
-*/
+router.use(isAuthenticated);
 
-router.post("/", isAuthenticated, createIssue);
-router.get('/:projectId',getIssues)
+router.post("/", createIssue);
+
+router.get("/backlog/:projectId", getBacklogIssues);
+
+router.get("/sprint/:sprintId", getSprintIssues);
+
+router.patch("/:issueId/move", moveIssue);
+router.patch("/:issueId/status", updateIssueStatus);
 
 export default router;
