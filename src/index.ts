@@ -1,19 +1,26 @@
 import express from "express";
 import config from "./config";
-import pool, { testDb } from "./db";
+import { testDb } from "./db";
 import userRoutes from "./routes/auth";
 import projectsRoutes from "./routes/projects";
 import issuesRoutes from "./routes/issues";
 import sprintRoutes from "./routes/sprints";
+import { connectRedis } from "./cache/redis";
+import { rateLimiter } from "./middlewares/rate-limit";
 
 const app = express();
 
 app.use(express.json());
-
+app.use(
+  rateLimiter({
+    capacity: 5,
+    refillRate:1,
+  })
+);
 async function startServer() {
   try {
     await testDb();
-
+    // await connectRedis();
     app.listen(config.port, () => {
       console.log(`🚀 Server running on ${config.port}`);
     });

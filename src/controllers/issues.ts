@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import pool from "../db";
+import { redis } from "../cache/redis";
 
 /**
  * Default: goes to backlog (sprint_id = NULL)
@@ -41,7 +42,14 @@ export async function createIssue(req: Request, res: Response) {
 
 export async function getIssue(req: Request, res: Response) {
   const { issueId } = req.params;
-
+  const cachedKey = `issue"${issueId}`;
+  const cachedValue = await redis.get(cachedKey);
+  if (cachedValue) {
+    return res.json({
+      success: true,
+      issue: JSON.parse(cachedValue),
+    });
+  }
   try {
     const issue = await pool.query(`SELECT * FROM issues WHERE id = $1`, [
       issueId,
@@ -50,7 +58,7 @@ export async function getIssue(req: Request, res: Response) {
     if (!issue.rows.length) {
       return res.status(404).json({ message: "Issue not found" });
     }
-
+    redis.set(cachedKey, JSON.stringify(issue.rows[0]));
     res.json({ success: true, issue: issue.rows[0] });
   } catch (error) {
     res.status(500).json({ success: false, error });
@@ -59,7 +67,14 @@ export async function getIssue(req: Request, res: Response) {
 
 export async function getBacklogIssues(req: Request, res: Response) {
   const { projectId } = req.params;
-
+  const cachedKey  = `project-backlogs:${projectId}`;
+  const cachedValue = await redis.get(cachedKey);
+  if(cachedValue){
+    return res.json({
+      sucess:true,
+      issues:JSON.parse(cachedValue)
+    })
+  }
   try {
     const issues = await pool.query(
       `
@@ -71,7 +86,7 @@ export async function getBacklogIssues(req: Request, res: Response) {
       `,
       [projectId]
     );
-
+    redis.set(cachedKey,JSON.stringify(issues.rows))
     res.json({ success: true, issues: issues.rows });
   } catch (error) {
     res.status(500).json({ success: false, error });
@@ -80,7 +95,14 @@ export async function getBacklogIssues(req: Request, res: Response) {
 
 export async function getSprintIssues(req: Request, res: Response) {
   const { sprintId } = req.params;
-
+  const cachedKey = `sprint-isues:${sprintId}`;
+  const cachedValue = await redis.get(cachedKey);
+  if(cachedValue){
+    return res.json({
+      success:true,
+      issues: JSON.parse(cachedValue)
+    })
+  }
   try {
     const issues = await pool.query(
       `
@@ -91,7 +113,7 @@ export async function getSprintIssues(req: Request, res: Response) {
       `,
       [sprintId]
     );
-
+    redis.set(cachedKey,JSON.stringify(issues.rows))
     res.json({ success: true, issues: issues.rows });
   } catch (error) {
     res.status(500).json({ success: false, error });

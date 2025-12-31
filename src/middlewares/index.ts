@@ -21,7 +21,7 @@ export const isAuthenticated = async (
     const token = authHeader?.split(" ")[1];
 
     const decoded = jwt.verify(token as string, config.jwt_secret);
-    req.user= decoded as User;
+    req.user = decoded as User;
     next();
   } catch (error) {
     return res

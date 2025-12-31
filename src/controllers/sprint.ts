@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import pool from "../db";
+import { redis } from "../cache/redis";
 
 /**
  * Create sprint
@@ -23,7 +24,7 @@ export const createSprint = async (req: Request, res: Response) => {
     `,
     [label, description, projectId, start_date, end_date, userId]
   );
-
+await redis.del(`project-sprints:${projectId}`);
   res.status(201).json(sprint.rows[0]);
 };
 
@@ -32,8 +33,18 @@ export const createSprint = async (req: Request, res: Response) => {
  */
 export const getProjectSprints = async (req: Request, res: Response) => {
   const { projectId } = req.params;
+  const cacheKey = `project-sprints:${projectId}`;
 
-  const sprints = await pool.query(
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    return res.json({
+      success: true,
+      source: "cache",
+      sprints: JSON.parse(cached),
+    });
+  }
+
+  const result = await pool.query(
     `
     SELECT *
     FROM sprints
@@ -43,8 +54,19 @@ export const getProjectSprints = async (req: Request, res: Response) => {
     [projectId]
   );
 
-  res.json(sprints.rows);
+  await redis.SETEX(
+    cacheKey,
+    60,
+    JSON.stringify(result.rows),
+);
+
+  res.json({
+    success: true,
+    source: "db",
+    sprints: result.rows,
+  });
 };
+
 
 /**
  * Start sprint (only one active sprint per project)

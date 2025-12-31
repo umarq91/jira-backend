@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import pool from "../db";
 import { ROLES } from "../types";
 import { getUserProjectRole } from "../utils";
+import { redis } from "../cache/redis";
 
 export const createProject = async (req: Request, res: Response) => {
   try {
@@ -80,12 +81,20 @@ export const deleteProject = async (req: Request, res: Response) => {
 export const getProjects = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
-
+    const cachedKey = `projects-user:${userId}`;
+    const cachedValue = await redis.get(cachedKey);
+    if (cachedValue) {
+      return res.json({
+        success: true,
+        projects: JSON.parse(cachedValue),
+      });
+    }
     const { rows } = await pool.query(
       "SELECT * FROM projects WHERE created_by = $1",
       [userId]
     );
 
+    await redis.setex(cachedKey, 60, JSON.stringify(rows));
     return res.json({ success: true, projects: rows });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Server error" });
@@ -97,29 +106,42 @@ export const getProject = async (req: Request, res: Response) => {
     const { projectId } = req.params;
     const userId = req.user?.userId;
 
+    const cacheKey = `project:${projectId}:user:${userId}`;
+
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return res.json({
+        success: true,
+        source: "cache",
+        project: JSON.parse(cached),
+      });
+    }
+
     const { rows, rowCount } = await pool.query(
       "SELECT * FROM projects WHERE id = $1",
       [projectId]
     );
 
     if (!rowCount) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Project not found" });
+      return res.status(404).json({ success: false, message: "Project not found" });
     }
 
     if (Number(rows[0].created_by) !== Number(userId)) {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied",
-      });
+      return res.status(403).json({ success: false, message: "Access denied" });
     }
 
-    return res.json({ success: true, project: rows[0] });
-  } catch (error) {
+    await redis.setex(cacheKey, 60, JSON.stringify(rows[0]));
+
+    return res.json({
+      success: true,
+      source: "db",
+      project: rows[0],
+    });
+  } catch {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 /* =========================
    ADD MEMBER
@@ -160,13 +182,20 @@ export const addMemberInProject = async (req: Request, res: Response) => {
 export const getAllMembers = async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
+    const cacheKey = `project:${projectId}:members`;
+
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return res.json({
+        success: true,
+        source: "cache",
+        members: JSON.parse(cached),
+      });
+    }
 
     const { rows } = await pool.query(
       `
-      SELECT 
-        u.id,
-        u.username,
-        pm.role
+      SELECT u.id, u.username, pm.role
       FROM project_members pm
       JOIN users u ON u.id = pm.user_id
       WHERE pm.project_id = $1
@@ -174,14 +203,18 @@ export const getAllMembers = async (req: Request, res: Response) => {
       [projectId]
     );
 
+    await redis.setex(cacheKey, 60, JSON.stringify(rows));
+
     return res.json({
       success: true,
+      source: "db",
       members: rows,
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ success: false });
   }
 };
+
 
 /* =========================
    GET MY (MEMBER) PROJECTS
@@ -189,6 +222,16 @@ export const getAllMembers = async (req: Request, res: Response) => {
 export const getMyProjects = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
+    const cacheKey = `user:${userId}:member-projects`;
+
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return res.json({
+        success: true,
+        source: "cache",
+        projects: JSON.parse(cached),
+      });
+    }
 
     const { rows } = await pool.query(
       `
@@ -200,11 +243,14 @@ export const getMyProjects = async (req: Request, res: Response) => {
       [userId]
     );
 
-    return res.json({ success: true, projects: rows });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: "Server error" });
+    await redis.setex(cacheKey, 60, JSON.stringify(rows));
+
+    return res.json({ success: true, source: "db", projects: rows });
+  } catch {
+    return res.status(500).json({ success: false });
   }
 };
+
 
 /*
 Only ADMIN
