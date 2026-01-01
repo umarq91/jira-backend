@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import config from "./config";
 import { testDb } from "./db";
 import userRoutes from "./routes/auth";
@@ -20,7 +20,7 @@ app.use(
 async function startServer() {
   try {
     await testDb();
-    // await connectRedis();
+    await connectRedis();
     app.listen(config.port, () => {
       console.log(`🚀 Server running on ${config.port}`);
     });
@@ -30,7 +30,12 @@ async function startServer() {
     process.exit(1); // ⛔ crash app if DB is down
   }
 }
-
+app.get('/health',(req:Request,res:Response)=>{
+    res.json({
+      sucess:true
+      message:" Server is runnign!"
+    })
+})
 app.use("/users", userRoutes);
 app.use("/projects", projectsRoutes);
 app.use("/issue", issuesRoutes);
